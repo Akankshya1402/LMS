@@ -1,8 +1,11 @@
 package com.lms.customer.service;
 
 import com.lms.customer.dto.CustomerRequest;
+import com.lms.customer.dto.CustomerResponse;
 import com.lms.customer.exception.CustomerNotFoundException;
 import com.lms.customer.model.Customer;
+import com.lms.customer.model.enums.AccountStatus;
+import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,79 +30,72 @@ class CustomerServiceTest {
 
     @Test
     void shouldCreateCustomer() {
-        CustomerRequest request = new CustomerRequest(
-                "John",
-                "john@test.com",
-                50000.0
-        );
 
-        Customer saved = Customer.builder()
-                .id("1")
-                .name("John")
+        CustomerRequest request = CustomerRequest.builder()
+                .fullName("John Doe")
                 .email("john@test.com")
-                .income(50000.0)
-                .kycStatus("PENDING")
+                .mobile("9876543210")
+                .monthlyIncome(BigDecimal.valueOf(50000))
                 .build();
 
-        when(repository.save(any(Customer.class))).thenReturn(saved);
+        Customer savedCustomer = Customer.builder()
+                .customerId("1")
+                .fullName("John Doe")
+                .email("john@test.com")
+                .mobile("9876543210")
+                .monthlyIncome(BigDecimal.valueOf(50000))
+                .creditScore(650)
+                .accountStatus(AccountStatus.ACTIVE)
+                .kycStatus(KycStatus.NOT_SUBMITTED)
+                .build();
 
-        var response = service.create(request);
+        when(repository.save(any(Customer.class))).thenReturn(savedCustomer);
 
-        assertEquals("John", response.getName());
+        CustomerResponse response = service.create(request);
+
+        assertEquals("John Doe", response.getFullName());
         assertEquals("john@test.com", response.getEmail());
-        assertEquals("PENDING", response.getKycStatus());
+        assertEquals(AccountStatus.ACTIVE, response.getAccountStatus());
+        assertEquals(KycStatus.NOT_SUBMITTED, response.getKycStatus());
+
         verify(repository).save(any(Customer.class));
     }
 
     @Test
     void shouldReturnCustomerById() {
+
         Customer customer = Customer.builder()
-                .id("1")
-                .name("John")
+                .customerId("1")
+                .fullName("John Doe")
                 .email("john@test.com")
-                .income(40000.0)
-                .kycStatus("APPROVED")
+                .mobile("9876543210")
+                .monthlyIncome(BigDecimal.valueOf(40000))
+                .creditScore(700)
+                .accountStatus(AccountStatus.ACTIVE)
+                .kycStatus(KycStatus.APPROVED)
                 .build();
 
         when(repository.findById("1")).thenReturn(Optional.of(customer));
 
-        var response = service.getById("1");
+        CustomerResponse response = service.getById("1");
 
-        assertEquals("John", response.getName());
-        assertEquals("APPROVED", response.getKycStatus());
+        assertEquals("John Doe", response.getFullName());
+        assertEquals(KycStatus.APPROVED, response.getKycStatus());
     }
 
     @Test
     void shouldThrowExceptionWhenCustomerNotFound() {
+
         when(repository.findById("invalid"))
                 .thenReturn(Optional.empty());
 
-        CustomerNotFoundException ex =
+        CustomerNotFoundException exception =
                 assertThrows(CustomerNotFoundException.class,
                         () -> service.getById("invalid"));
 
-        assertEquals("Customer not found with id: invalid", ex.getMessage());
-    }
-    @Test
-    void shouldMapEntityToResponseCorrectly() {
-
-        Customer customer = Customer.builder()
-                .id("10")
-                .name("Alex")
-                .email("alex@test.com")
-                .income(80000.0)
-                .kycStatus("APPROVED")
-                .build();
-
-        when(repository.findById("10"))
-                .thenReturn(Optional.of(customer));
-
-        var response = service.getById("10");
-
-        assertEquals("Alex", response.getName());
-        assertEquals("APPROVED", response.getKycStatus());
+        assertEquals("Customer not found with id: invalid",
+                exception.getMessage());
     }
 
 }
-
 

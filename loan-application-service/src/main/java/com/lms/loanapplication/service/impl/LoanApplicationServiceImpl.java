@@ -1,12 +1,10 @@
 package com.lms.loanapplication.service.impl;
 
-import com.lms.loanapplication.dto.LoanApplicationEvent;
 import com.lms.loanapplication.dto.LoanApplicationRequest;
 import com.lms.loanapplication.dto.LoanApplicationResponse;
-import com.lms.loanapplication.exception.LoanApplicationNotFoundException;
 import com.lms.loanapplication.kafka.LoanApplicationEventProducer;
 import com.lms.loanapplication.model.LoanApplication;
-import com.lms.loanapplication.model.LoanStatus;
+import com.lms.loanapplication.model.enums.ApplicationStatus;
 import com.lms.loanapplication.repository.LoanApplicationRepository;
 import com.lms.loanapplication.service.LoanApplicationService;
 import lombok.RequiredArgsConstructor;
@@ -22,59 +20,38 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     private final LoanApplicationRepository repository;
     private final LoanApplicationEventProducer eventProducer;
 
+    // =========================
+    // CUSTOMER: APPLY FOR LOAN
+    // =========================
     @Override
-    public LoanApplicationResponse apply(LoanApplicationRequest request) {
+    public LoanApplicationResponse apply(
+            String customerId,
+            LoanApplicationRequest request) {
 
-        // =========================
-        // BUSINESS VALIDATION FIRST
-        // =========================
-        if (request.getMonthlyIncome() < 10_000) {
-            throw new IllegalArgumentException("Income too low for loan");
-        }
-
-        // =========================
-        // CREATE & SAVE APPLICATION
-        // =========================
         LoanApplication application = LoanApplication.builder()
-                .customerId(request.getCustomerId())
+                .customerId(customerId)
                 .loanType(request.getLoanType())
                 .loanAmount(request.getLoanAmount())
                 .tenureMonths(request.getTenureMonths())
                 .monthlyIncome(request.getMonthlyIncome())
-                .status(LoanStatus.APPLIED)
-                .appliedAt(LocalDateTime.now())
+                .status(ApplicationStatus.APPLIED)
+                .createdAt(LocalDateTime.now())
                 .build();
 
-        LoanApplication saved = repository.save(application);
+        LoanApplication savedApplication = repository.save(application);
 
-        // =========================
-        // PUBLISH KAFKA EVENT
-        // =========================
-        eventProducer.sendLoanAppliedEvent(
-                LoanApplicationEvent.builder()
-                        .eventType("LOAN_APPLIED")
-                        .loanApplicationId(saved.getId())
-                        .customerId(saved.getCustomerId())
-                        .loanType(saved.getLoanType())
-                        .timestamp(LocalDateTime.now())
-                        .build()
-        );
+        // 🔥 Kafka event
+        eventProducer.publishApplicationCreated(savedApplication);
 
-        return mapToResponse(saved);
+        return mapToResponse(savedApplication);
     }
 
+    // =========================
+    // CUSTOMER: VIEW OWN APPLICATIONS
+    // =========================
     @Override
-    public LoanApplicationResponse getById(String id) {
-        LoanApplication app = repository.findById(id)
-                .orElseThrow(() ->
-                        new LoanApplicationNotFoundException(
-                                "Loan application not found with id: " + id));
+    public List<LoanApplicationResponse> getMyApplications(String customerId) {
 
-        return mapToResponse(app);
-    }
-
-    @Override
-    public List<LoanApplicationResponse> getByCustomer(String customerId) {
         return repository.findByCustomerId(customerId)
                 .stream()
                 .map(this::mapToResponse)
@@ -82,19 +59,68 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     // =========================
-    // MAPPER
+    // ADMIN / LOAN OFFICER: VIEW PENDING
     // =========================
-    private LoanApplicationResponse mapToResponse(LoanApplication app) {
-        LoanApplicationResponse res = new LoanApplicationResponse();
-        res.setId(app.getId());
-        res.setCustomerId(app.getCustomerId());
-        res.setLoanType(app.getLoanType());
-        res.setLoanAmount(app.getLoanAmount());
-        res.setTenureMonths(app.getTenureMonths());
-        res.setMonthlyIncome(app.getMonthlyIncome());
-        res.setStatus(app.getStatus().name());
-        res.setAppliedAt(app.getAppliedAt());
-        return res;
+    @Override
+    public List<LoanApplicationResponse> getPendingApplications() {
+
+        return repository.findByStatus(ApplicationStatus.APPLIED)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // =========================
+    // ADMIN / LOAN OFFICER: REVIEW APPLICATION
+    // =========================
+    @Override
+    public LoanApplicationResponse review(
+            String applicationId,
+            boolean approved,
+            String remarks,
+            String reviewer) {
+
+        LoanApplication application = repository.findById(applicationId)
+                .orElseThrow(() ->
+                        new RuntimeException("Loan application not found"));
+
+        application.setStatus(
+                approved ? ApplicationStatus.APPROVED
+                         : ApplicationStatus.REJECTED);
+
+        application.setRemarks(remarks);
+        application.setReviewedBy(reviewer);
+        application.setReviewedAt(LocalDateTime.now());
+
+        LoanApplication savedApplication = repository.save(application);
+
+        // 🔥 Kafka event based on decision
+        if (approved) {
+            eventProducer.publishApplicationApproved(savedApplication);
+        } else {
+            eventProducer.publishApplicationRejected(savedApplication);
+        }
+
+        return mapToResponse(savedApplication);
+    }
+
+    // =========================
+    // ENTITY → RESPONSE MAPPER
+    // =========================
+    private LoanApplicationResponse mapToResponse(LoanApplication application) {
+
+        LoanApplicationResponse response = new LoanApplicationResponse();
+        response.setApplicationId(application.getApplicationId());
+        response.setCustomerId(application.getCustomerId());
+        response.setLoanType(application.getLoanType());
+        response.setLoanAmount(application.getLoanAmount());
+        response.setTenureMonths(application.getTenureMonths());
+        response.setMonthlyIncome(application.getMonthlyIncome());
+        response.setStatus(application.getStatus());
+        response.setRemarks(application.getRemarks());
+        response.setAppliedAt(application.getCreatedAt());
+
+        return response;
     }
 }
 

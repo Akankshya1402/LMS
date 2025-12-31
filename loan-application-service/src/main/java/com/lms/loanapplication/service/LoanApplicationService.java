@@ -7,10 +7,17 @@ import java.util.List;
 
 public interface LoanApplicationService {
 
-    LoanApplicationResponse apply(LoanApplicationRequest request);
+    LoanApplicationResponse apply(
+            String customerId,
+            LoanApplicationRequest request);
 
-    LoanApplicationResponse getById(String id);
+    List<LoanApplicationResponse> getMyApplications(String customerId);
 
-    List<LoanApplicationResponse> getByCustomer(String customerId);
+    List<LoanApplicationResponse> getPendingApplications();
+
+    LoanApplicationResponse review(
+            String applicationId,
+            boolean approved,
+            String remarks,
+            String reviewer);
 }
-
