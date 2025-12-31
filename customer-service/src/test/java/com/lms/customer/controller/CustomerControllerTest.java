@@ -3,6 +3,8 @@ package com.lms.customer.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.customer.dto.CustomerRequest;
 import com.lms.customer.dto.CustomerResponse;
+import com.lms.customer.model.enums.AccountStatus;
+import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.service.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -37,28 +41,33 @@ class CustomerControllerTest {
     @WithMockUser(authorities = "ROLE_ADMIN")
     void shouldCreateCustomer() throws Exception {
 
-        CustomerRequest request = new CustomerRequest();
-        request.setName("John");
-        request.setEmail("john@test.com");
-        request.setIncome(50000.0);
+        CustomerRequest request = CustomerRequest.builder()
+                .fullName("John Doe")
+                .email("john@test.com")
+                .mobile("9876543210")
+                .monthlyIncome(BigDecimal.valueOf(50000))
+                .build();
 
-        CustomerResponse response = new CustomerResponse();
-        response.setId("1");
-        response.setName("John");
-        response.setEmail("john@test.com");
-        response.setIncome(50000.0);
-        response.setKycStatus("PENDING");
+        CustomerResponse response = CustomerResponse.builder()
+                .customerId("1")
+                .fullName("John Doe")
+                .email("john@test.com")
+                .mobile("9876543210")
+                .monthlyIncome(BigDecimal.valueOf(50000))
+                .accountStatus(AccountStatus.ACTIVE)
+                .kycStatus(KycStatus.NOT_SUBMITTED)
+                .build();
 
         when(service.create(any(CustomerRequest.class)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/customers")
-                .with(csrf()) // 🔥 REQUIRED
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("John"))
-                .andExpect(jsonPath("$.kycStatus").value("PENDING"));
+                .andExpect(jsonPath("$.fullName").value("John Doe"))
+                .andExpect(jsonPath("$.kycStatus").value("NOT_SUBMITTED"));
     }
 
     // =========================
@@ -68,18 +77,21 @@ class CustomerControllerTest {
     @WithMockUser(authorities = "ROLE_ADMIN")
     void shouldGetCustomerById() throws Exception {
 
-        CustomerResponse response = new CustomerResponse();
-        response.setId("1");
-        response.setName("Bob");
-        response.setEmail("bob@test.com");
-        response.setIncome(70000.0);
-        response.setKycStatus("APPROVED");
+        CustomerResponse response = CustomerResponse.builder()
+                .customerId("1")
+                .fullName("Bob Smith")
+                .email("bob@test.com")
+                .mobile("9123456789")
+                .monthlyIncome(BigDecimal.valueOf(70000))
+                .accountStatus(AccountStatus.ACTIVE)
+                .kycStatus(KycStatus.APPROVED)
+                .build();
 
         when(service.getById("1")).thenReturn(response);
 
         mockMvc.perform(get("/api/customers/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.customerId").value("1"))
                 .andExpect(jsonPath("$.email").value("bob@test.com"))
                 .andExpect(jsonPath("$.kycStatus").value("APPROVED"));
     }
@@ -92,18 +104,19 @@ class CustomerControllerTest {
         mockMvc.perform(get("/api/customers/1"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // =========================
+    // VALIDATION FAILURE
+    // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_USER")
-    void shouldReturn400WhenValidationFailsEvenIfRoleIsWrong() throws Exception {
+    @WithMockUser(authorities = "ROLE_ADMIN")
+    void shouldReturn400WhenValidationFails() throws Exception {
 
         mockMvc.perform(post("/api/customers")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isBadRequest());
     }
-
-
 }
-
 

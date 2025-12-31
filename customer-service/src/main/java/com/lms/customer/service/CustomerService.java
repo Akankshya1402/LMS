@@ -4,6 +4,8 @@ import com.lms.customer.dto.CustomerRequest;
 import com.lms.customer.dto.CustomerResponse;
 import com.lms.customer.exception.CustomerNotFoundException;
 import com.lms.customer.model.Customer;
+import com.lms.customer.model.enums.AccountStatus;
+import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,10 +24,15 @@ public class CustomerService {
     public CustomerResponse create(CustomerRequest request) {
 
         Customer customer = Customer.builder()
-                .name(request.getName())
+                .fullName(request.getFullName())
                 .email(request.getEmail())
-                .income(request.getIncome())
-                .kycStatus("PENDING")
+                .mobile(request.getMobile())
+                .monthlyIncome(request.getMonthlyIncome())
+                .creditScore(650) // default/mock
+                .accountStatus(AccountStatus.ACTIVE)
+                .kycStatus(KycStatus.NOT_SUBMITTED)
+                .emailVerified(false)
+                .mobileVerified(false)
                 .build();
 
         Customer savedCustomer = repository.save(customer);
@@ -43,11 +50,12 @@ public class CustomerService {
     // =========================
     // GET CUSTOMER BY ID (ADMIN)
     // =========================
-    public CustomerResponse getById(String id) {
+    public CustomerResponse getById(String customerId) {
 
-        Customer customer = repository.findById(id)
+        Customer customer = repository.findById(customerId)
                 .orElseThrow(() ->
-                        new CustomerNotFoundException("Customer not found with id: " + id)
+                        new CustomerNotFoundException(
+                                "Customer not found with id: " + customerId)
                 );
 
         return mapToResponse(customer);
@@ -57,11 +65,15 @@ public class CustomerService {
     // ENTITY → DTO MAPPER
     // =========================
     private CustomerResponse mapToResponse(Customer customer) {
+
         return CustomerResponse.builder()
-                .id(customer.getId())
-                .name(customer.getName())
+                .customerId(customer.getCustomerId())
+                .fullName(customer.getFullName())
                 .email(customer.getEmail())
-                .income(customer.getIncome())
+                .mobile(customer.getMobile())
+                .monthlyIncome(customer.getMonthlyIncome())
+                .creditScore(customer.getCreditScore())
+                .accountStatus(customer.getAccountStatus())
                 .kycStatus(customer.getKycStatus())
                 .build();
     }

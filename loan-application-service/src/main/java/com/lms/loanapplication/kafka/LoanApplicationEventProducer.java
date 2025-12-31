@@ -1,31 +1,51 @@
 package com.lms.loanapplication.kafka;
 
-import com.lms.loanapplication.dto.LoanApplicationEvent;
+import com.lms.loanapplication.kafka.KafkaTopics;
+import com.lms.loanapplication.event.LoanApplicationEvent;
+import com.lms.loanapplication.model.LoanApplication;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class LoanApplicationEventProducer {
 
-    @Value("${kafka.topics.loan-application}")
-    private String topic;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    private final KafkaTemplate<String, LoanApplicationEvent> kafkaTemplate;
+    public void publishApplicationCreated(LoanApplication application) {
+        kafkaTemplate.send(
+                KafkaTopics.LOAN_APP_CREATED,
+                buildEvent(application)
+        );
+    }
 
-    public void sendLoanAppliedEvent(LoanApplicationEvent event) {
-        try {
-            kafkaTemplate.send(topic, event.getLoanApplicationId(), event);
-            log.info("Loan application event published. id={}", event.getLoanApplicationId());
-        } catch (Exception ex) {
-            // DO NOT break business flow if Kafka is down
-            log.error("Failed to publish loan application event. id={}", 
-                      event.getLoanApplicationId(), ex);
-        }
+    public void publishApplicationApproved(LoanApplication application) {
+        kafkaTemplate.send(
+                KafkaTopics.LOAN_APP_APPROVED,
+                buildEvent(application)
+        );
+    }
+
+    public void publishApplicationRejected(LoanApplication application) {
+        kafkaTemplate.send(
+                KafkaTopics.LOAN_APP_REJECTED,
+                buildEvent(application)
+        );
+    }
+
+    private LoanApplicationEvent buildEvent(LoanApplication app) {
+        return LoanApplicationEvent.builder()
+                .applicationId(app.getApplicationId())
+                .customerId(app.getCustomerId())
+                .loanType(app.getLoanType())
+                .loanAmount(app.getLoanAmount())
+                .tenureMonths(app.getTenureMonths())
+                .status(app.getStatus())
+                .eventTime(LocalDateTime.now())
+                .build();
     }
 }
 

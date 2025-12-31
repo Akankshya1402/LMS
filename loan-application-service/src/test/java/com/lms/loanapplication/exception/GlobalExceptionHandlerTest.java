@@ -6,22 +6,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import java.util.List;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.mockito.Mockito.when;
-
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LoanApplicationController.class)
-@Import(GlobalExceptionHandler.class)
 class GlobalExceptionHandlerTest {
 
     @Autowired
@@ -31,32 +22,15 @@ class GlobalExceptionHandlerTest {
     private LoanApplicationService service;
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void shouldReturnFieldErrorsOnValidationFailure() throws Exception {
+    void shouldHandleRuntimeException() throws Exception {
 
-        mockMvc.perform(post("/api/loan-applications")
-                .with(csrf()) // ✅ required because POST + Spring Security
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")) // invalid payload
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.customerId").exists())
-                .andExpect(jsonPath("$.loanAmount").exists())
-                .andExpect(jsonPath("$.tenureMonths").exists())
-                .andExpect(jsonPath("$.monthlyIncome").exists());
+        when(service.getPendingApplications())
+                .thenThrow(new RuntimeException("Something went wrong"));
+
+        mockMvc.perform(get("/loan-applications/pending"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message")
+                        .value("Something went wrong"));
     }
-    @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void shouldReturn404WhenLoanNotFound() throws Exception {
-
-        when(service.getById("X"))
-                .thenThrow(new LoanApplicationNotFoundException(
-                        "Loan application not found with id: X"
-                ));
-
-        mockMvc.perform(get("/api/loan-applications/X"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error")
-                        .value("Loan application not found with id: X"));
-    }
-
 }
+

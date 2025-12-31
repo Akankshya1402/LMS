@@ -1,70 +1,71 @@
 package com.lms.loanapplication.kafka;
 
-import com.lms.loanapplication.dto.LoanApplicationEvent;
-import org.junit.jupiter.api.BeforeEach;
+import com.lms.loanapplication.model.LoanApplication;
+import com.lms.loanapplication.model.enums.ApplicationStatus;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.lang.reflect.Field;
+import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoanApplicationEventProducerTest {
 
     @Mock
-    private KafkaTemplate<String, LoanApplicationEvent> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks
     private LoanApplicationEventProducer producer;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        Field field = LoanApplicationEventProducer.class
-                .getDeclaredField("topic");
-        field.setAccessible(true);
-        field.set(producer, "loan.application.events");
+    @Test
+    void shouldPublishApplicationCreatedEvent() {
+
+        LoanApplication application = LoanApplication.builder()
+                .applicationId("APP1")
+                .customerId("CUST1")
+                .loanType("PERSONAL")
+                .loanAmount(BigDecimal.valueOf(100000))
+                .tenureMonths(12)
+                .status(ApplicationStatus.APPLIED)
+                .build();
+
+        producer.publishApplicationCreated(application);
+
+        verify(kafkaTemplate)
+                .send(eq(KafkaTopics.LOAN_APP_CREATED), any());
     }
 
     @Test
-    void shouldSendKafkaEvent() {
-        LoanApplicationEvent event = LoanApplicationEvent.builder()
-                .loanApplicationId("LA1")
-                .eventType("LOAN_APPLIED")
+    void shouldPublishApplicationApprovedEvent() {
+
+        LoanApplication application = LoanApplication.builder()
+                .applicationId("APP2")
+                .status(ApplicationStatus.APPROVED)
                 .build();
 
-        producer.sendLoanAppliedEvent(event);
+        producer.publishApplicationApproved(application);
 
-        verify(kafkaTemplate).send(
-                eq("loan.application.events"),
-                eq("LA1"),
-                eq(event)
-        );
+        verify(kafkaTemplate)
+                .send(eq(KafkaTopics.LOAN_APP_APPROVED), any());
     }
 
-    // ✅ ADD THIS TEST HERE (Kafka failure path)
     @Test
-    void shouldNotThrowWhenKafkaFails() {
-        LoanApplicationEvent event = LoanApplicationEvent.builder()
-                .loanApplicationId("LA1")
-                .eventType("LOAN_APPLIED")
+    void shouldPublishApplicationRejectedEvent() {
+
+        LoanApplication application = LoanApplication.builder()
+                .applicationId("APP3")
+                .status(ApplicationStatus.REJECTED)
                 .build();
 
-        doThrow(new RuntimeException("Kafka down"))
-                .when(kafkaTemplate)
-                .send(anyString(), anyString(), any());
+        producer.publishApplicationRejected(application);
 
-        assertDoesNotThrow(() ->
-                producer.sendLoanAppliedEvent(event)
-        );
+        verify(kafkaTemplate)
+                .send(eq(KafkaTopics.LOAN_APP_REJECTED), any());
     }
 }
+

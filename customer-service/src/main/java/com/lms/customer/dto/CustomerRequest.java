@@ -1,9 +1,9 @@
 package com.lms.customer.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -11,14 +11,20 @@ import lombok.*;
 @AllArgsConstructor
 public class CustomerRequest {
 
-    @NotBlank(message = "Name is required")
-    private String name;
+    @NotBlank
+    private String fullName;
 
-    @Email(message = "Invalid email")
-    @NotBlank(message = "Email is required")
+    @Email
+    @NotBlank
     private String email;
 
-    @NotNull(message = "Income is required")
-    private Double income;
+    @NotBlank
+    @Pattern(regexp = "^[6-9]\\d{9}$")
+    private String mobile;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal monthlyIncome;
 }
+
 
