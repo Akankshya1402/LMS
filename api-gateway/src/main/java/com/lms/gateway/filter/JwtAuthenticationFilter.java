@@ -52,17 +52,20 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 return exchange.getResponse().setComplete();
             }
 
-            exchange.getRequest().mutate()
-                    .header("X-User", claims.getSubject())
-                    .header("X-Roles", String.join(",", roles))
+            ServerWebExchange mutatedExchange = exchange.mutate()
+                    .request(builder -> builder
+                            .header("X-User", claims.getSubject())
+                            .header("X-Roles", String.join(",", roles))
+                    )
                     .build();
+
+            return chain.filter(mutatedExchange);
+
 
         } catch (Exception e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-
-        return chain.filter(exchange);
     }
 }
 

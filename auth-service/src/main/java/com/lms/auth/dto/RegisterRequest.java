@@ -7,11 +7,15 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank(message = "Username is required")
-    @Size(min = 4, max = 20, message = "Username must be 4–20 characters")
+    @NotBlank
+    @Size(min = 4, max = 20)
     private String username;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @NotBlank
+    @Size(min = 8)
     private String password;
+
+    @NotBlank
+    @jakarta.validation.constraints.Email
+    private String email;   // ✅ added
 }

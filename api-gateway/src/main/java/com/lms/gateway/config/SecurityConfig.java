@@ -10,10 +10,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+
         http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchange -> exchange.anyExchange().permitAll());
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> {}) // ✅ enable CORS
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS).permitAll() // 🔥 REQUIRED
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .anyExchange().authenticated()
+                );
 
         return http.build();
     }
 }
+
