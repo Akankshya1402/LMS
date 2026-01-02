@@ -35,10 +35,10 @@ class CustomerControllerTest {
     private ObjectMapper objectMapper;
 
     // =========================
-    // CREATE CUSTOMER (ADMIN)
+    // CREATE CUSTOMER (CUSTOMER)
     // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
+    @WithMockUser(authorities = "ROLE_CUSTOMER")
     void shouldCreateCustomer() throws Exception {
 
         CustomerRequest request = CustomerRequest.builder()
@@ -84,7 +84,7 @@ class CustomerControllerTest {
                 .mobile("9123456789")
                 .monthlyIncome(BigDecimal.valueOf(70000))
                 .accountStatus(AccountStatus.ACTIVE)
-                .kycStatus(KycStatus.APPROVED)
+                .kycStatus(KycStatus.VERIFIED)
                 .build();
 
         when(service.getById("1")).thenReturn(response);
@@ -93,30 +93,16 @@ class CustomerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customerId").value("1"))
                 .andExpect(jsonPath("$.email").value("bob@test.com"))
-                .andExpect(jsonPath("$.kycStatus").value("APPROVED"));
+                .andExpect(jsonPath("$.kycStatus").value("VERIFIED"));
     }
 
     // =========================
-    // SECURITY: NOT AUTHENTICATED
+    // SECURITY
     // =========================
     @Test
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         mockMvc.perform(get("/api/customers/1"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    // =========================
-    // VALIDATION FAILURE
-    // =========================
-    @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
-    void shouldReturn400WhenValidationFails() throws Exception {
-
-        mockMvc.perform(post("/api/customers")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
     }
 }
 

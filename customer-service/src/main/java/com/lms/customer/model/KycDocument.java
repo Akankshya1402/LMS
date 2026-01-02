@@ -6,32 +6,30 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Document(collection = "kyc_documents")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class KycDocument {
 
     @Id
-    private String documentId;
+    private String id;                // MongoDB document id
 
-    private String customerId;
+    private String customerId;        // From JWT / principal
+    private KycType type;             // AADHAAR, PAN, ADDRESS_PROOF
 
-    private KycType type;          // AADHAAR, PAN, etc.
-    private KycStatus status;      // PENDING, APPROVED, REJECTED
+    private KycStatus status;         // PENDING | VERIFIED | REJECTED
 
-    private String documentNumber; // masked value if needed
-    private LocalDate expiryDate;
+    private String documentNumber;    // Masked (e.g. XXXX1234)
+
+    // Upload metadata
+    private LocalDateTime uploadedAt;
 
     // Admin audit fields
     private String verifiedBy;
     private LocalDateTime verifiedAt;
     private String remarks;
-
-    // Metadata
-    private LocalDateTime uploadedAt;
 }

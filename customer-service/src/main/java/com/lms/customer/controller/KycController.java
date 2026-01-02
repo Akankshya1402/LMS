@@ -1,7 +1,6 @@
 package com.lms.customer.controller;
 
 import com.lms.customer.model.KycDocument;
-import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.service.KycService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,51 +13,65 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping
+@RequestMapping("/api")
 public class KycController {
 
     private final KycService kycService;
 
     // =========================
-    // CUSTOMER: UPLOAD KYC
+    // CUSTOMER → UPLOAD KYC DOCUMENT
     // =========================
     @PostMapping("/customers/me/kyc")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<Void> uploadKyc(@RequestBody KycDocument document,
-                                          Principal principal) {
+    public ResponseEntity<Void> uploadKyc(
+            @RequestBody KycDocument document,
+            Principal principal) {
 
-        // In real app → customerId from JWT
+        // Server-controlled fields
         document.setCustomerId(principal.getName());
 
         kycService.uploadDocument(document);
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     // =========================
-    // CUSTOMER: VIEW OWN KYC
+    // CUSTOMER → VIEW OWN KYC DOCUMENTS
     // =========================
     @GetMapping("/customers/me/kyc")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<KycDocument>> getMyKycDocuments(
             Principal principal) {
 
-        List<KycDocument> documents =
-                kycService.getMyDocuments(principal.getName());
-
-        return ResponseEntity.ok(documents);
+        return ResponseEntity.ok(
+                kycService.getMyDocuments(principal.getName())
+        );
     }
 
     // =========================
-    // ADMIN: VERIFY KYC
+    // ADMIN → APPROVE KYC DOCUMENT
     // =========================
-    @PutMapping("/admin/kyc/{documentId}/verify")
+    @PutMapping("/admin/kyc/{documentId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> verifyKyc(
+    public ResponseEntity<Void> approveKyc(
             @PathVariable String documentId,
-            @RequestParam KycStatus status,
+            @RequestParam(required = false) String remarks) {
+
+        kycService.approveDocument(documentId, remarks);
+        return ResponseEntity.ok().build();
+    }
+
+    // =========================
+    // ADMIN → REJECT KYC DOCUMENT
+    // =========================
+    @PutMapping("/admin/kyc/{documentId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> rejectKyc(
+            @PathVariable String documentId,
             @RequestParam String remarks) {
 
-        kycService.verifyDocument(documentId, status, remarks);
+        kycService.rejectDocument(documentId, remarks);
         return ResponseEntity.ok().build();
     }
 }
+

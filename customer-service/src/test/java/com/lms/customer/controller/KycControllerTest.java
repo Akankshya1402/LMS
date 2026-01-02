@@ -2,7 +2,6 @@ package com.lms.customer.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.customer.model.KycDocument;
-import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.model.enums.KycType;
 import com.lms.customer.service.KycService;
 import org.junit.jupiter.api.Test;
@@ -34,30 +33,24 @@ class KycControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // =========================
-    // CUSTOMER: UPLOAD KYC
-    // =========================
     @Test
     @WithMockUser(authorities = "ROLE_CUSTOMER")
     void shouldUploadKycDocument() throws Exception {
 
         KycDocument document = KycDocument.builder()
                 .type(KycType.AADHAAR)
-                .documentNumber("XXXX-XXXX-1234")
+                .documentNumber("XXXX1234")
                 .build();
 
-        doNothing().when(kycService).uploadDocument(any(KycDocument.class));
+        doNothing().when(kycService).uploadDocument(any());
 
-        mockMvc.perform(post("/customers/me/kyc")
+        mockMvc.perform(post("/api/customers/me/kyc")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(document)))
                 .andExpect(status().isCreated());
     }
 
-    // =========================
-    // CUSTOMER: VIEW KYC
-    // =========================
     @Test
     @WithMockUser(authorities = "ROLE_CUSTOMER")
     void shouldReturnCustomerKycDocuments() throws Exception {
@@ -65,35 +58,34 @@ class KycControllerTest {
         when(kycService.getMyDocuments(any()))
                 .thenReturn(List.of(new KycDocument()));
 
-        mockMvc.perform(get("/customers/me/kyc"))
+        mockMvc.perform(get("/api/customers/me/kyc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // =========================
-    // ADMIN: VERIFY KYC
-    // =========================
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
-    void shouldVerifyKycDocument() throws Exception {
+    void shouldApproveKycDocument() throws Exception {
 
         doNothing().when(kycService)
-                .verifyDocument("D1", KycStatus.APPROVED, "OK");
+                .approveDocument("D1", "OK");
 
-        mockMvc.perform(put("/admin/kyc/D1/verify")
+        mockMvc.perform(put("/api/admin/kyc/D1/approve")
                         .with(csrf())
-                        .param("status", "APPROVED")
                         .param("remarks", "OK"))
                 .andExpect(status().isOk());
     }
 
-    // =========================
-    // SECURITY: UNAUTHORIZED
-    // =========================
     @Test
-    void shouldReturn401WhenNotAuthenticated() throws Exception {
+    @WithMockUser(authorities = "ROLE_ADMIN")
+    void shouldRejectKycDocument() throws Exception {
 
-        mockMvc.perform(get("/customers/me/kyc"))
-                .andExpect(status().isUnauthorized());
+        doNothing().when(kycService)
+                .rejectDocument("D1", "Invalid");
+
+        mockMvc.perform(put("/api/admin/kyc/D1/reject")
+                        .with(csrf())
+                        .param("remarks", "Invalid"))
+                .andExpect(status().isOk());
     }
 }

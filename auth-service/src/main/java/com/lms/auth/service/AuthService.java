@@ -8,9 +8,9 @@ import com.lms.auth.model.Role;
 import com.lms.auth.model.User;
 import com.lms.auth.repository.UserRepository;
 import com.lms.auth.util.JwtUtil;
-
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,9 +24,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
     // =========================
-    // REGISTER
+    // REGISTER (CUSTOMER ONLY)
     // =========================
     public void register(RegisterRequest request) {
 
@@ -38,16 +39,38 @@ public class AuthService {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .roles(Set.of(Role.CUSTOMER))
+                .enabled(true)
                 .build();
 
         userRepository.save(user);
     }
 
     // =========================
-    // LOGIN
+    // LOGIN (ADMIN OR CUSTOMER)
     // =========================
     public String login(LoginRequest request) {
 
+        // 🔒 ADMIN LOGIN (HARDCODED)
+        if ("admin".equals(request.getUsername())) {
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+
+            if (!authentication.isAuthenticated()) {
+                throw new InvalidCredentialsException("Invalid admin credentials");
+            }
+
+            return jwtUtil.generateToken(
+                    "admin",
+                    Set.of("ADMIN")
+            );
+        }
+
+        // 👤 CUSTOMER LOGIN (DB)
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() ->
                         new InvalidCredentialsException("Invalid username or password"));
@@ -66,7 +89,7 @@ public class AuthService {
     }
 
     // =========================
-    // FORGOT PASSWORD
+    // FORGOT PASSWORD (CUSTOMER)
     // =========================
     public void forgotPassword(String username, String newPassword) {
 

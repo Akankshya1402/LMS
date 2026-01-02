@@ -20,7 +20,9 @@ public class LoanApplicationController {
 
     private final LoanApplicationService service;
 
+    // =========================
     // CUSTOMER
+    // =========================
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<LoanApplicationResponse> apply(
@@ -39,15 +41,17 @@ public class LoanApplicationController {
         return service.getMyApplications(principal.getName());
     }
 
-    // ADMIN / LOAN OFFICER
+    // =========================
+    // LOAN OFFICER ONLY
+    // =========================
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('ADMIN','LOAN_OFFICER')")
+    @PreAuthorize("hasRole('LOAN_OFFICER')")
     public List<LoanApplicationResponse> pending() {
         return service.getPendingApplications();
     }
 
     @PutMapping("/{id}/review")
-    @PreAuthorize("hasAnyRole('ADMIN','LOAN_OFFICER')")
+    @PreAuthorize("hasRole('LOAN_OFFICER')")
     public LoanApplicationResponse review(
             @PathVariable String id,
             @RequestParam boolean approved,

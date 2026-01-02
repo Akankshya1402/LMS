@@ -1,18 +1,28 @@
 package com.lms.customer.service;
 
 import com.lms.customer.model.KycDocument;
-import com.lms.customer.model.enums.KycStatus;
 
 import java.util.List;
 
 public interface KycService {
 
-    // Customer uploads a document
+    // =========================
+    // CUSTOMER ACTIONS
+    // =========================
+
+    // Upload a KYC document (always goes to PENDING)
     void uploadDocument(KycDocument document);
 
-    // Customer views own documents
+    // View own uploaded documents
     List<KycDocument> getMyDocuments(String customerId);
 
-    // Admin verifies document
-    void verifyDocument(String documentId, KycStatus status, String remarks);
+    // =========================
+    // ADMIN ACTIONS
+    // =========================
+
+    // Approve a KYC document
+    void approveDocument(String documentId, String remarks);
+
+    // Reject a KYC document
+    void rejectDocument(String documentId, String remarks);
 }

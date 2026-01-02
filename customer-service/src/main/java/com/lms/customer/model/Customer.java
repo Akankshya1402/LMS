@@ -47,5 +47,10 @@ public class Customer {
 
     @NotNull
     private KycStatus kycStatus;
+    
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
+    private BigDecimal existingEmiLiability;
+
 }
 

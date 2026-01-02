@@ -39,8 +39,7 @@ public class CustomerController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<CustomerResponse>> getAll(Pageable pageable) {
-        Page<CustomerResponse> result = service.getAll(pageable);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.getAll(pageable));
     }
 
     // =========================
@@ -48,10 +47,10 @@ public class CustomerController {
     // =========================
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CustomerResponse> getById(@PathVariable String id) {
-        CustomerResponse response = service.getById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CustomerResponse> getById(
+            @PathVariable String id) {
+
+        return ResponseEntity.ok(service.getById(id));
     }
 }
-
 

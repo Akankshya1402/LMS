@@ -56,8 +56,11 @@ public class JwtUtil {
     @SuppressWarnings("unchecked")
     public Set<String> extractRoles(String token) {
         Claims claims = extractAllClaims(token);
-        return Set.copyOf((java.util.List<String>) claims.get("roles"));
+        return ((java.util.List<String>) claims.get("roles"))
+                .stream()
+                .collect(java.util.stream.Collectors.toSet());
     }
+
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);

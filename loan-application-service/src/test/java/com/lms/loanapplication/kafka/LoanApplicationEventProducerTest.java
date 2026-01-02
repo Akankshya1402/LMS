@@ -2,6 +2,7 @@ package com.lms.loanapplication.kafka;
 
 import com.lms.loanapplication.model.LoanApplication;
 import com.lms.loanapplication.model.enums.ApplicationStatus;
+import com.lms.loanapplication.model.enums.LoanType;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -11,7 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.math.BigDecimal;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class LoanApplicationEventProducerTest {
@@ -27,8 +30,8 @@ class LoanApplicationEventProducerTest {
 
         LoanApplication application = LoanApplication.builder()
                 .applicationId("APP1")
-                .customerId("CUST1")
-                .loanType("PERSONAL")
+                .customerId("C1")
+                .loanType(LoanType.PERSONAL)
                 .loanAmount(BigDecimal.valueOf(100000))
                 .tenureMonths(12)
                 .status(ApplicationStatus.APPLIED)

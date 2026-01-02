@@ -1,6 +1,5 @@
 package com.lms.loanapplication.kafka;
 
-import com.lms.loanapplication.kafka.KafkaTopics;
 import com.lms.loanapplication.event.LoanApplicationEvent;
 import com.lms.loanapplication.model.LoanApplication;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +39,7 @@ public class LoanApplicationEventProducer {
         return LoanApplicationEvent.builder()
                 .applicationId(app.getApplicationId())
                 .customerId(app.getCustomerId())
+                // ✅ ENUM SAFE
                 .loanType(app.getLoanType())
                 .loanAmount(app.getLoanAmount())
                 .tenureMonths(app.getTenureMonths())
@@ -48,5 +48,4 @@ public class LoanApplicationEventProducer {
                 .build();
     }
 }
-
 

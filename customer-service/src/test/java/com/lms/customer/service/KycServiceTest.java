@@ -23,9 +23,15 @@ class KycServiceTest {
     @Mock
     private KycDocumentRepository repository;
 
+    @Mock
+    private CustomerService customerService;
+
     @InjectMocks
     private KycServiceImpl service;
 
+    // =========================
+    // CUSTOMER: UPLOAD DOCUMENT
+    // =========================
     @Test
     void shouldUploadDocument() {
 
@@ -40,8 +46,13 @@ class KycServiceTest {
         assertNotNull(document.getUploadedAt());
 
         verify(repository).save(document);
+        verify(customerService)
+                .updateKycStatus("C1", KycStatus.PENDING);
     }
 
+    // =========================
+    // CUSTOMER: VIEW DOCUMENTS
+    // =========================
     @Test
     void shouldReturnCustomerDocuments() {
 
@@ -54,35 +65,71 @@ class KycServiceTest {
         verify(repository).findByCustomerId("C1");
     }
 
+    // =========================
+    // ADMIN: APPROVE DOCUMENT
+    // =========================
     @Test
-    void shouldVerifyDocument() {
+    void shouldApproveDocument() {
 
         KycDocument document = KycDocument.builder()
-                .documentId("D1")
+                .id("D1")
+                .customerId("C1")
                 .status(KycStatus.PENDING)
                 .build();
 
         when(repository.findById("D1"))
                 .thenReturn(Optional.of(document));
 
-        service.verifyDocument("D1", KycStatus.APPROVED, "Verified");
+        service.approveDocument("D1", "Verified");
 
-        assertEquals(KycStatus.APPROVED, document.getStatus());
+        assertEquals(KycStatus.VERIFIED, document.getStatus());
         assertEquals("Verified", document.getRemarks());
         assertNotNull(document.getVerifiedAt());
 
         verify(repository).save(document);
+        verify(customerService)
+                .updateKycStatus("C1", KycStatus.VERIFIED);
     }
 
+    // =========================
+    // ADMIN: REJECT DOCUMENT
+    // =========================
+    @Test
+    void shouldRejectDocument() {
+
+        KycDocument document = KycDocument.builder()
+                .id("D1")
+                .customerId("C1")
+                .status(KycStatus.PENDING)
+                .build();
+
+        when(repository.findById("D1"))
+                .thenReturn(Optional.of(document));
+
+        service.rejectDocument("D1", "Invalid PAN");
+
+        assertEquals(KycStatus.REJECTED, document.getStatus());
+        assertEquals("Invalid PAN", document.getRemarks());
+        assertNotNull(document.getVerifiedAt());
+
+        verify(repository).save(document);
+        verify(customerService)
+                .updateKycStatus("C1", KycStatus.REJECTED);
+    }
+
+    // =========================
+    // ERROR: DOCUMENT NOT FOUND
+    // =========================
     @Test
     void shouldThrowExceptionWhenDocumentNotFound() {
 
         when(repository.findById("X"))
                 .thenReturn(Optional.empty());
 
-        RuntimeException exception =
-                assertThrows(RuntimeException.class,
-                        () -> service.verifyDocument("X", KycStatus.APPROVED, "OK"));
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> service.approveDocument("X", "OK")
+        );
 
         assertEquals("KYC document not found", exception.getMessage());
     }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.loanapplication.dto.LoanApplicationRequest;
 import com.lms.loanapplication.dto.LoanApplicationResponse;
 import com.lms.loanapplication.model.enums.ApplicationStatus;
+import com.lms.loanapplication.model.enums.LoanType;
 import com.lms.loanapplication.service.LoanApplicationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ class LoanApplicationControllerTest {
     void shouldApplyForLoan() throws Exception {
 
         LoanApplicationRequest request = new LoanApplicationRequest();
-        request.setLoanType("PERSONAL");
+        request.setLoanType(LoanType.PERSONAL);
         request.setLoanAmount(BigDecimal.valueOf(100000));
         request.setTenureMonths(12);
         request.setMonthlyIncome(BigDecimal.valueOf(40000));
@@ -53,8 +54,7 @@ class LoanApplicationControllerTest {
         response.setStatus(ApplicationStatus.APPLIED);
         response.setAppliedAt(LocalDateTime.now());
 
-        when(service.apply(any(), any()))
-                .thenReturn(response);
+        when(service.apply(any(), any())).thenReturn(response);
 
         mockMvc.perform(post("/loan-applications")
                         .with(csrf())
@@ -95,7 +95,7 @@ class LoanApplicationControllerTest {
     }
 
     // =========================
-    // SECURITY: UNAUTHORIZED
+    // SECURITY
     // =========================
     @Test
     void shouldReturn401WhenUnauthenticated() throws Exception {
@@ -104,4 +104,3 @@ class LoanApplicationControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 }
-
