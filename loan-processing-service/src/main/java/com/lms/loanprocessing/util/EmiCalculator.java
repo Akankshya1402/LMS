@@ -31,7 +31,8 @@ public final class EmiCalculator {
         }
 
         BigDecimal monthlyRate = annualRate
-                .divide(BigDecimal.valueOf(12 * 100), 10, RoundingMode.HALF_UP);
+        	    .divide(BigDecimal.valueOf(1200L), 10, RoundingMode.HALF_UP);
+
 
         BigDecimal onePlusRPowerN =
                 monthlyRate.add(BigDecimal.ONE).pow(months);
