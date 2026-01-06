@@ -9,7 +9,8 @@ import com.lms.auth.model.User;
 import com.lms.auth.repository.UserRepository;
 import com.lms.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     // =========================
-    // REGISTER (CUSTOMER ONLY)
+    // REGISTER
     // =========================
     public void register(RegisterRequest request) {
 
@@ -46,37 +47,35 @@ public class AuthService {
     }
 
     // =========================
-    // LOGIN (ADMIN OR CUSTOMER)
+    // LOGIN
     // =========================
     public String login(LoginRequest request) {
 
-        // 🔒 ADMIN LOGIN (HARDCODED)
+        // ADMIN LOGIN
         if ("admin".equals(request.getUsername())) {
 
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
-                    )
-            );
+            Authentication authentication =
+                    authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    request.getUsername(),
+                                    request.getPassword()
+                            )
+                    );
 
             if (!authentication.isAuthenticated()) {
                 throw new InvalidCredentialsException("Invalid admin credentials");
             }
 
-            return jwtUtil.generateToken(
-                    "admin",
-                    Set.of("ADMIN")
-            );
+            return jwtUtil.generateToken("admin", Set.of("ADMIN"));
         }
 
-        // 👤 CUSTOMER LOGIN (DB)
+        // CUSTOMER LOGIN
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() ->
-                        new InvalidCredentialsException("Invalid username or password"));
+                        new InvalidCredentialsException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("Invalid username or password");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         return jwtUtil.generateToken(
@@ -87,10 +86,6 @@ public class AuthService {
                         .collect(Collectors.toSet())
         );
     }
-
-    // =========================
-    // FORGOT PASSWORD (CUSTOMER)
-    // =========================
     public void forgotPassword(String username, String newPassword) {
 
         User user = userRepository.findByUsername(username)
@@ -100,4 +95,5 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
 }

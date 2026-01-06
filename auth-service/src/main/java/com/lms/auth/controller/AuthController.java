@@ -1,15 +1,15 @@
 package com.lms.auth.controller;
 
 import com.lms.auth.dto.AuthResponse;
+import com.lms.auth.dto.ForgotPasswordRequest;
 import com.lms.auth.dto.LoginRequest;
+import com.lms.auth.dto.MessageResponse;
 import com.lms.auth.dto.RegisterRequest;
 import com.lms.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.lms.auth.dto.MessageResponse;
-import com.lms.auth.dto.ForgotPasswordRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,7 +28,6 @@ public class AuthController {
         );
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request) {
@@ -36,9 +35,7 @@ public class AuthController {
         String token = authService.login(request);
         return ResponseEntity.ok(new AuthResponse(token));
     }
-    // =========================
-    // FORGOT PASSWORD ✅ NEW
-    // =========================
+
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {

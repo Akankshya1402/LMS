@@ -1,9 +1,8 @@
 package com.lms.loanapplication.repository;
 
 import com.lms.loanapplication.model.LoanApplication;
-import com.lms.loanapplication.model.enums.ApplicationStatus;
+import com.lms.loanapplication.model.enums.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import com.lms.loanapplication.model.enums.LoanType;
 
 import java.util.List;
 
@@ -12,12 +11,8 @@ public interface LoanApplicationRepository
 
     List<LoanApplication> findByCustomerId(String customerId);
 
-    List<LoanApplication> findByStatus(ApplicationStatus status);
-
-    // RULE: only one approved loan per type
-    boolean existsByCustomerIdAndLoanTypeAndStatus(
+    boolean existsByCustomerIdAndLoanType(
             String customerId,
-            LoanType loanType,
-            ApplicationStatus status
+            LoanType loanType
     );
 }

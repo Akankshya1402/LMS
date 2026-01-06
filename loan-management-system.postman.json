@@ -1,0 +1,192 @@
+{
+  "info": {
+    "name": "Loan Management System - Complete APIs (via API Gateway)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+
+    {
+      "name": "Auth Service",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/api/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/api/auth/login"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/api/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/admin/dashboard"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Customer Service",
+      "item": [
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/api/customers"
+          }
+        },
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/customers"
+          }
+        },
+        {
+          "name": "Get Customer By Id",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/customers/{{customerId}}"
+          }
+        },
+        {
+          "name": "Upload KYC",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/api/customers/me/kyc"
+          }
+        },
+        {
+          "name": "Get My KYC",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/customers/me/kyc"
+          }
+        },
+        {
+          "name": "Approve KYC",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:9090/api/admin/kyc/{{documentId}}/approve"
+          }
+        },
+        {
+          "name": "Reject KYC",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:9090/api/admin/kyc/{{documentId}}/reject"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Loan Application Service",
+      "item": [
+        {
+          "name": "Apply Loan",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/loan-applications"
+          }
+        },
+        {
+          "name": "My Loan Applications",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/loan-applications/me"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Loan Processing Service",
+      "item": [
+        {
+          "name": "Get Loan",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/loans/{{loanId}}"
+          }
+        },
+        {
+          "name": "EMI Overview",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/loans/{{loanId}}/emi-overview"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Payment Service",
+      "item": [
+        {
+          "name": "Pay EMI",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:9090/payments"
+          }
+        },
+        {
+          "name": "Payments By Loan",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/payments/loan/{{loanId}}"
+          }
+        },
+        {
+          "name": "Payments By Customer",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/payments/customer/{{customerId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Analytics Service",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/analytics/dashboard"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Notification Service",
+      "item": [
+        {
+          "name": "Get Notification",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:9090/api/notifications/{{notificationId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
+
+

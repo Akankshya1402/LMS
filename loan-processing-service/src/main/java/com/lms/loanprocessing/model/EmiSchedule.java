@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Document(collection = "emi_schedule")
+@Document("emi_schedule")
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,9 +20,8 @@ public class EmiSchedule {
 
     private String loanId;
     private Integer emiNumber;
-
     private BigDecimal emiAmount;
     private LocalDate dueDate;
-
     private EmiStatus status;
 }
+

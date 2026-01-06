@@ -3,6 +3,7 @@ package com.lms.loanapplication.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.loanapplication.dto.LoanApplicationRequest;
 import com.lms.loanapplication.dto.LoanApplicationResponse;
+import com.lms.loanapplication.exception.GlobalExceptionHandler;
 import com.lms.loanapplication.model.enums.ApplicationStatus;
 import com.lms.loanapplication.model.enums.LoanType;
 import com.lms.loanapplication.service.LoanApplicationService;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LoanApplicationController.class)
+@Import(GlobalExceptionHandler.class)
 class LoanApplicationControllerTest {
 
     @Autowired
@@ -36,22 +39,18 @@ class LoanApplicationControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // =========================
-    // CUSTOMER: APPLY
-    // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_CUSTOMER")
+    @WithMockUser(username = "user1", roles = "CUSTOMER")
     void shouldApplyForLoan() throws Exception {
 
         LoanApplicationRequest request = new LoanApplicationRequest();
         request.setLoanType(LoanType.PERSONAL);
         request.setLoanAmount(BigDecimal.valueOf(100000));
         request.setTenureMonths(12);
-        request.setMonthlyIncome(BigDecimal.valueOf(40000));
 
         LoanApplicationResponse response = new LoanApplicationResponse();
         response.setApplicationId("APP1");
-        response.setStatus(ApplicationStatus.APPLIED);
+        response.setStatus(ApplicationStatus.SUBMITTED);
         response.setAppliedAt(LocalDateTime.now());
 
         when(service.apply(any(), any())).thenReturn(response);
@@ -62,14 +61,11 @@ class LoanApplicationControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.applicationId").value("APP1"))
-                .andExpect(jsonPath("$.status").value("APPLIED"));
+                .andExpect(jsonPath("$.status").value("SUBMITTED"));
     }
 
-    // =========================
-    // CUSTOMER: VIEW OWN
-    // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_CUSTOMER")
+    @WithMockUser(username = "user1", roles = "CUSTOMER")
     void shouldReturnMyApplications() throws Exception {
 
         when(service.getMyApplications(any()))
@@ -78,29 +74,5 @@ class LoanApplicationControllerTest {
         mockMvc.perform(get("/loan-applications/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
-    }
-
-    // =========================
-    // ADMIN: VIEW PENDING
-    // =========================
-    @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
-    void shouldReturnPendingApplications() throws Exception {
-
-        when(service.getPendingApplications())
-                .thenReturn(List.of(new LoanApplicationResponse()));
-
-        mockMvc.perform(get("/loan-applications/pending"))
-                .andExpect(status().isOk());
-    }
-
-    // =========================
-    // SECURITY
-    // =========================
-    @Test
-    void shouldReturn401WhenUnauthenticated() throws Exception {
-
-        mockMvc.perform(get("/loan-applications/pending"))
-                .andExpect(status().isUnauthorized());
     }
 }

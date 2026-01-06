@@ -1,11 +1,13 @@
 package com.lms.loanprocessing.exception;
 
 import com.lms.loanprocessing.controller.LoanProcessingController;
-import com.lms.loanprocessing.service.LoanProcessingService;
+import com.lms.loanprocessing.service.LoanServicingService;
+import com.lms.loanprocessing.repository.LoanRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
@@ -19,15 +21,16 @@ class GlobalExceptionHandlerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private LoanProcessingService service;
+    private LoanRepository loanRepository;
 
-    // =========================
-    // LOAN NOT FOUND
-    // =========================
+    @MockBean
+    private LoanServicingService servicingService;
+
     @Test
+    @WithMockUser(roles = "CUSTOMER")
     void shouldReturn404WhenLoanNotFound() throws Exception {
 
-        when(service.getLoan("X"))
+        when(loanRepository.findById("X"))
                 .thenThrow(new LoanNotFoundException("Loan not found"));
 
         mockMvc.perform(get("/loans/X"))
@@ -36,18 +39,17 @@ class GlobalExceptionHandlerTest {
                         .value("Loan not found"));
     }
 
-    // =========================
-    // GENERIC ERROR
-    // =========================
     @Test
-    void shouldReturn500ForUnexpectedError() throws Exception {
+    @WithMockUser(roles = "CUSTOMER")
+    void shouldReturn500ForUnhandledException() throws Exception {
 
-        when(service.getLoan("Y"))
+        when(loanRepository.findById("X"))
                 .thenThrow(new RuntimeException("Boom"));
 
-        mockMvc.perform(get("/loans/Y"))
+        mockMvc.perform(get("/loans/X"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message")
                         .value("Internal server error"));
     }
 }
+

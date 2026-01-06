@@ -2,6 +2,7 @@ package com.lms.auth.service;
 
 import com.lms.auth.dto.LoginRequest;
 import com.lms.auth.dto.RegisterRequest;
+import com.lms.auth.exception.InvalidCredentialsException;
 import com.lms.auth.model.Role;
 import com.lms.auth.model.User;
 import com.lms.auth.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -33,6 +35,9 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private AuthenticationManager authenticationManager;
+
     @InjectMocks
     private AuthService authService;
 
@@ -45,15 +50,16 @@ class AuthServiceTest {
                 .username("user1")
                 .password("encodedPassword")
                 .roles(Set.of(Role.CUSTOMER))
+                .enabled(true)
                 .build();
     }
 
-    // ============================
-    // REGISTER TESTS
-    // ============================
-
+    // =========================
+    // REGISTER TEST
+    // =========================
     @Test
     void shouldRegisterUserSuccessfully() {
+
         RegisterRequest request = new RegisterRequest();
         request.setUsername("user1");
         request.setPassword("password123");
@@ -63,51 +69,53 @@ class AuthServiceTest {
 
         assertDoesNotThrow(() -> authService.register(request));
 
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository).save(any(User.class));
     }
 
-    // ============================
+    // =========================
     // LOGIN TESTS
-    // ============================
-
+    // =========================
     @Test
     void shouldLoginSuccessfullyAndReturnToken() {
+
         LoginRequest request = new LoginRequest();
         request.setUsername("user1");
         request.setPassword("password123");
 
         when(userRepository.findByUsername("user1"))
                 .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(any(), any())).thenReturn(true);
+        when(passwordEncoder.matches(any(), any()))
+                .thenReturn(true);
         when(jwtUtil.generateToken(any(), any()))
                 .thenReturn("jwt-token");
 
         String token = authService.login(request);
 
-        assertNotNull(token);
         assertEquals("jwt-token", token);
     }
 
     @Test
     void shouldThrowExceptionForWrongPassword() {
+
         LoginRequest request = new LoginRequest();
         request.setUsername("user1");
-        request.setPassword("wrongPassword");
+        request.setPassword("wrong");
 
         when(userRepository.findByUsername("user1"))
                 .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(any(), any())).thenReturn(false);
+        when(passwordEncoder.matches(any(), any()))
+                .thenReturn(false);
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> authService.login(request)
-        );
+        InvalidCredentialsException ex =
+                assertThrows(InvalidCredentialsException.class,
+                        () -> authService.login(request));
 
-        assertEquals("Invalid credentials", exception.getMessage());
+        assertEquals("Invalid credentials", ex.getMessage());
     }
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
+
         LoginRequest request = new LoginRequest();
         request.setUsername("unknown");
         request.setPassword("password");
@@ -115,13 +123,11 @@ class AuthServiceTest {
         when(userRepository.findByUsername("unknown"))
                 .thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> authService.login(request)
-        );
+        InvalidCredentialsException ex =
+                assertThrows(InvalidCredentialsException.class,
+                        () -> authService.login(request));
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found", ex.getMessage());
     }
 }
-
 

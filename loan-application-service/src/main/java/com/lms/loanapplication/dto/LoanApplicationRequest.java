@@ -11,38 +11,16 @@ import java.math.BigDecimal;
 @Setter
 public class LoanApplicationRequest {
 
-    // =========================
-    // LOAN TYPE (ENUM → DROPDOWN)
-    // =========================
-    @NotNull(message = "Loan type is required")
+    @NotNull
     private LoanType loanType;
 
-    // =========================
-    // LOAN AMOUNT
-    // =========================
-    @NotNull(message = "Loan amount is required")
-    @DecimalMin(value = "10000", message = "Minimum loan amount is 10,000")
-    @DecimalMax(value = "1000000", message = "Maximum loan amount is 10,00,000")
+    @NotNull
+    @DecimalMin("10000")
+    @DecimalMax("1000000")
     private BigDecimal loanAmount;
 
-    // =========================
-    // TENURE (NUMERIC)
-    // =========================
-    @NotNull(message = "Tenure is required")
-    @Min(value = 12, message = "Minimum tenure is 12 months")
-    @Max(value = 36, message = "Maximum tenure is 36 months")
+    @NotNull
+    @Min(12) @Max(36)
     private Integer tenureMonths;
-
-    // =========================
-    // MONTHLY INCOME
-    // =========================
-    @NotNull(message = "Monthly income is required")
-    @DecimalMin(
-        value = "0.0",
-        inclusive = false,
-        message = "Monthly income must be greater than zero"
-    )
-    private BigDecimal monthlyIncome;
 }
-
 

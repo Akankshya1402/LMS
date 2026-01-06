@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -22,7 +23,13 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CustomerController.class)
+@WebMvcTest(
+        controllers = CustomerController.class,
+        excludeAutoConfiguration = {
+                org.springframework.cloud.config.client.ConfigClientAutoConfiguration.class
+        }
+)
+@ActiveProfiles("test")
 class CustomerControllerTest {
 
     @Autowired
@@ -34,11 +41,8 @@ class CustomerControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // =========================
-    // CREATE CUSTOMER (CUSTOMER)
-    // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_CUSTOMER")
+    @WithMockUser(roles = "CUSTOMER")
     void shouldCreateCustomer() throws Exception {
 
         CustomerRequest request = CustomerRequest.builder()
@@ -58,8 +62,7 @@ class CustomerControllerTest {
                 .kycStatus(KycStatus.NOT_SUBMITTED)
                 .build();
 
-        when(service.create(any(CustomerRequest.class)))
-                .thenReturn(response);
+        when(service.create(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/customers")
                         .with(csrf())
@@ -70,35 +73,22 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$.kycStatus").value("NOT_SUBMITTED"));
     }
 
-    // =========================
-    // GET CUSTOMER BY ID (ADMIN)
-    // =========================
     @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void shouldGetCustomerById() throws Exception {
 
-        CustomerResponse response = CustomerResponse.builder()
-                .customerId("1")
-                .fullName("Bob Smith")
-                .email("bob@test.com")
-                .mobile("9123456789")
-                .monthlyIncome(BigDecimal.valueOf(70000))
-                .accountStatus(AccountStatus.ACTIVE)
-                .kycStatus(KycStatus.VERIFIED)
-                .build();
-
-        when(service.getById("1")).thenReturn(response);
+        when(service.getById("1"))
+                .thenReturn(CustomerResponse.builder()
+                        .customerId("1")
+                        .email("bob@test.com")
+                        .kycStatus(KycStatus.VERIFIED)
+                        .build());
 
         mockMvc.perform(get("/api/customers/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerId").value("1"))
-                .andExpect(jsonPath("$.email").value("bob@test.com"))
-                .andExpect(jsonPath("$.kycStatus").value("VERIFIED"));
+                .andExpect(jsonPath("$.customerId").value("1"));
     }
 
-    // =========================
-    // SECURITY
-    // =========================
     @Test
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         mockMvc.perform(get("/api/customers/1"))

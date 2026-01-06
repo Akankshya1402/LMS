@@ -1,7 +1,6 @@
 package com.lms.loanapplication.model;
 
-import com.lms.loanapplication.model.enums.ApplicationStatus;
-import com.lms.loanapplication.model.enums.LoanType;
+import com.lms.loanapplication.model.enums.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,17 +19,9 @@ public class LoanApplication {
     private String applicationId;
 
     private String customerId;
-
-    private LoanType loanType;                // PERSONAL, HOME, etc.
+    private LoanType loanType;
     private BigDecimal loanAmount;
     private Integer tenureMonths;
-    private BigDecimal monthlyIncome;
-
     private ApplicationStatus status;
-
-    private String remarks;                 // rejection reason
-
     private LocalDateTime createdAt;
-    private LocalDateTime reviewedAt;
-    private String reviewedBy;
 }

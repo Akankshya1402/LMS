@@ -92,18 +92,27 @@ public class KycServiceImpl implements KycService {
         List<KycDocument> documents =
                 repository.findByCustomerId(customerId);
 
+        if (documents == null || documents.isEmpty()) {
+            customerService.updateKycStatus(customerId, KycStatus.PENDING);
+            return;
+        }
+
         boolean anyRejected = documents.stream()
                 .anyMatch(d -> d.getStatus() == KycStatus.REJECTED);
+
+        if (anyRejected) {
+            customerService.updateKycStatus(customerId, KycStatus.REJECTED);
+            return;
+        }
 
         boolean allVerified = documents.stream()
                 .allMatch(d -> d.getStatus() == KycStatus.VERIFIED);
 
-        if (anyRejected) {
-            customerService.updateKycStatus(customerId, KycStatus.REJECTED);
-        } else if (allVerified && !documents.isEmpty()) {
+        if (allVerified) {
             customerService.updateKycStatus(customerId, KycStatus.VERIFIED);
         } else {
             customerService.updateKycStatus(customerId, KycStatus.PENDING);
         }
     }
+
 }

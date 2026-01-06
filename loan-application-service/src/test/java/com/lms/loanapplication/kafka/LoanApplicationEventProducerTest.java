@@ -1,11 +1,9 @@
 package com.lms.loanapplication.kafka;
 
 import com.lms.loanapplication.model.LoanApplication;
-import com.lms.loanapplication.model.enums.ApplicationStatus;
-import com.lms.loanapplication.model.enums.LoanType;
+import com.lms.loanapplication.model.enums.*;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +24,7 @@ class LoanApplicationEventProducerTest {
     private LoanApplicationEventProducer producer;
 
     @Test
-    void shouldPublishApplicationCreatedEvent() {
+    void shouldPublishLoanApplicationSubmittedEvent() {
 
         LoanApplication application = LoanApplication.builder()
                 .applicationId("APP1")
@@ -34,41 +32,12 @@ class LoanApplicationEventProducerTest {
                 .loanType(LoanType.PERSONAL)
                 .loanAmount(BigDecimal.valueOf(100000))
                 .tenureMonths(12)
-                .status(ApplicationStatus.APPLIED)
+                .status(ApplicationStatus.SUBMITTED)
                 .build();
 
-        producer.publishApplicationCreated(application);
+        producer.publishSubmitted(application);
 
         verify(kafkaTemplate)
-                .send(eq(KafkaTopics.LOAN_APP_CREATED), any());
-    }
-
-    @Test
-    void shouldPublishApplicationApprovedEvent() {
-
-        LoanApplication application = LoanApplication.builder()
-                .applicationId("APP2")
-                .status(ApplicationStatus.APPROVED)
-                .build();
-
-        producer.publishApplicationApproved(application);
-
-        verify(kafkaTemplate)
-                .send(eq(KafkaTopics.LOAN_APP_APPROVED), any());
-    }
-
-    @Test
-    void shouldPublishApplicationRejectedEvent() {
-
-        LoanApplication application = LoanApplication.builder()
-                .applicationId("APP3")
-                .status(ApplicationStatus.REJECTED)
-                .build();
-
-        producer.publishApplicationRejected(application);
-
-        verify(kafkaTemplate)
-                .send(eq(KafkaTopics.LOAN_APP_REJECTED), any());
+                .send(eq(KafkaTopics.LOAN_APPLICATION_SUBMITTED), any());
     }
 }
-

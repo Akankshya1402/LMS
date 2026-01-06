@@ -1,9 +1,6 @@
 package com.lms.loanprocessing.event;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -20,4 +17,3 @@ public class LoanApprovedEvent {
     private Integer tenureMonths;
     private Double interestRate;
 }
-

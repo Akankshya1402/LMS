@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -21,7 +22,13 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(KycController.class)
+@WebMvcTest(
+        controllers = KycController.class,
+        excludeAutoConfiguration = {
+                org.springframework.cloud.config.client.ConfigClientAutoConfiguration.class
+        }
+)
+@ActiveProfiles("test")
 class KycControllerTest {
 
     @Autowired
@@ -34,7 +41,7 @@ class KycControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(authorities = "ROLE_CUSTOMER")
+    @WithMockUser(roles = "CUSTOMER")
     void shouldUploadKycDocument() throws Exception {
 
         KycDocument document = KycDocument.builder()
@@ -52,7 +59,7 @@ class KycControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = "ROLE_CUSTOMER")
+    @WithMockUser(roles = "CUSTOMER")
     void shouldReturnCustomerKycDocuments() throws Exception {
 
         when(kycService.getMyDocuments(any()))
@@ -64,11 +71,10 @@ class KycControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void shouldApproveKycDocument() throws Exception {
 
-        doNothing().when(kycService)
-                .approveDocument("D1", "OK");
+        doNothing().when(kycService).approveDocument("D1", "OK");
 
         mockMvc.perform(put("/api/admin/kyc/D1/approve")
                         .with(csrf())
@@ -77,11 +83,10 @@ class KycControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = "ROLE_ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void shouldRejectKycDocument() throws Exception {
 
-        doNothing().when(kycService)
-                .rejectDocument("D1", "Invalid");
+        doNothing().when(kycService).rejectDocument("D1", "Invalid");
 
         mockMvc.perform(put("/api/admin/kyc/D1/reject")
                         .with(csrf())
@@ -89,3 +94,4 @@ class KycControllerTest {
                 .andExpect(status().isOk());
     }
 }
+

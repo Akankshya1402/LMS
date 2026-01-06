@@ -1,13 +1,68 @@
-# IDE
+# ===============================
+# Maven / Java
+# ===============================
+target/
+*.log
+*.tmp
+*.class
+
+# ===============================
+# IDEs (Eclipse / IntelliJ / VSCode)
+# ===============================
 .metadata/
-.sonarlint/
+.settings/
+.project
+.classpath
+.factorypath
+*.iml
 .idea/
 .vscode/
 
-# Maven
-target/
-*.log
-
-# OS
+# ===============================
+# OS files
+# ===============================
 .DS_Store
 Thumbs.db
+
+# ===============================
+# Node / Angular
+# ===============================
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===============================
+# Environment / Secrets
+# ===============================
+.env
+.env.*
+*.key
+*.pem
+
+# ===============================
+# Test / Performance configs
+# ===============================
+*application-jmeter.yml
+*.jmx
+
+# ===============================
+# Docker
+# ===============================
+**/docker-data/
+**/*.pid
+
+# ===============================
+# Reports / Coverage
+# ===============================
+**/target/site/
+**/jacoco.exec
+
+# ===============================
+# Misc
+# ===============================
+*.bak
+*.swp
+*.swo

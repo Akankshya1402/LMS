@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  application:
+    name: payment-service
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

@@ -1,8 +1,10 @@
 package com.lms.loanprocessing.controller;
 
-import com.lms.loanprocessing.dto.EmiPaymentRequest;
+import com.lms.loanprocessing.dto.EmiOverviewResponse;
+import com.lms.loanprocessing.exception.LoanNotFoundException;
 import com.lms.loanprocessing.model.Loan;
-import com.lms.loanprocessing.service.LoanProcessingService;
+import com.lms.loanprocessing.repository.LoanRepository;
+import com.lms.loanprocessing.service.LoanServicingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,31 +15,34 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class LoanProcessingController {
 
-    private final LoanProcessingService service;
+    private final LoanRepository loanRepository;
+    private final LoanServicingService servicingService;
 
     // =========================
-    // CUSTOMER / ADMIN: GET LOAN DETAILS
+    // GET LOAN DETAILS
     // =========================
     @GetMapping("/{loanId}")
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     public ResponseEntity<Loan> getLoan(
             @PathVariable String loanId) {
 
-        return ResponseEntity.ok(service.getLoan(loanId));
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() ->
+                        new LoanNotFoundException("Loan not found"));
+
+        return ResponseEntity.ok(loan);
     }
 
     // =========================
-    // CUSTOMER: PAY EMI
+    // EMI PAID / PENDING / OVERDUE OVERVIEW
     // =========================
-    @PostMapping("/emi/pay")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<Void> payEmi(
-            @RequestBody EmiPaymentRequest request) {
+    @GetMapping("/{loanId}/emi-overview")
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<EmiOverviewResponse> getEmiOverview(
+            @PathVariable String loanId) {
 
-        service.recordEmiPayment(
-                request.getLoanId(),
-                request.getEmiNumber());
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                servicingService.getEmiOverview(loanId)
+        );
     }
 }

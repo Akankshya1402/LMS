@@ -1,26 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="
-           http://maven.apache.org/POM/4.0.0
-           https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- ========================= -->
+    <!-- PROJECT INFO -->
+    <!-- ========================= -->
     <groupId>com.lms</groupId>
     <artifactId>loan-management-system</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
+    <!-- ========================= -->
+    <!-- PROPERTIES -->
+    <!-- ========================= -->
     <properties>
+        <!-- Java -->
         <java.version>17</java.version>
+
+        <!-- Spring -->
         <spring.boot.version>3.2.5</spring.boot.version>
         <spring.cloud.version>2023.0.1</spring.cloud.version>
+
+        <!-- SonarCloud -->
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>akankshya1402</sonar.organization>
+        <sonar.projectKey>Akankshya1402_LMS</sonar.projectKey>
+
+        <!-- Coverage -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+            **/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+
+        <!-- Exclusions -->
+        <sonar.coverage.exclusions>
+            **/config-server/**,
+            **/eureka-server/**,
+            **/api-gateway/**
+        </sonar.coverage.exclusions>
+
+        <sonar.exclusions>
+            **/*Application.java,
+            **/config/**,
+            **/dto/**,
+            **/model/**
+        </sonar.exclusions>
+
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- ========================= -->
+    <!-- DEPENDENCY MANAGEMENT -->
+    <!-- ========================= -->
     <dependencyManagement>
         <dependencies>
 
+            <!-- Spring Boot BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -29,6 +68,7 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Spring Cloud BOM -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -40,9 +80,88 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- ========================= -->
+    <!-- BUILD -->
+    <!-- ========================= -->
+    <build>
+
+        <!-- Centralized plugin versions -->
+        <pluginManagement>
+            <plugins>
+
+                <!-- Spring Boot -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring.boot.version}</version>
+                </plugin>
+
+                <!-- JaCoCo -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.11</version>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+
+        <!-- Active plugins -->
+        <plugins>
+
+            <!-- SonarCloud (root only) -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.10.0.2594</version>
+            </plugin>
+
+            <!-- JaCoCo -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+
+                    <!-- Attach agent -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- Generate report -->
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+    <!-- ========================= -->
+    <!-- MODULES -->
+    <!-- ========================= -->
     <modules>
         <module>config-server</module>
         <module>eureka-server</module>
+        <module>api-gateway</module>
+
+        <module>customer-service</module>
+        <module>loan-application-service</module>
+        <module>loan-processing-service</module>
+        <module>notification-service</module>
+        <module>payment-service</module>
+        <module>auth-service</module>
+        <module>analytics-service</module>
     </modules>
 
 </project>
+

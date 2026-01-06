@@ -1,16 +1,11 @@
 package com.lms.loanapplication.client;
 
-import java.math.BigDecimal;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
 
+@FeignClient(name = "customer-service", path = "/customers")
 public interface CustomerClient {
 
-    void validateCustomerForLoan(String customerId);
-
-    Integer getCreditScore(String customerId);
-
-    BigDecimal getMonthlyIncome(String customerId);
-
-    BigDecimal getExistingEmiLiability(String customerId);
-
-    void updateEmiLiability(String customerId, BigDecimal emiAmount);
+    @GetMapping("/{customerId}/validate")
+    void validateCustomerForLoan(@PathVariable String customerId);
 }

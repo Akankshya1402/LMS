@@ -1,10 +1,9 @@
 package com.lms.loanapplication.exception;
 
 public class LoanApplicationNotFoundException
-        extends RuntimeException {
+        extends LoanApplicationException {
 
-    public LoanApplicationNotFoundException(String message) {
-        super(message);
+    public LoanApplicationNotFoundException(String id) {
+        super("Loan application not found: " + id);
     }
 }
-

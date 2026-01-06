@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+
+  config:
+    import: optional:classpath:/
+
+  main:
+    allow-bean-definition-overriding: true
