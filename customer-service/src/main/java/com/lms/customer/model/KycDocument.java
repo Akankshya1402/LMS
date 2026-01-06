@@ -1,35 +1,34 @@
 package com.lms.customer.model;
 
 import com.lms.customer.model.enums.KycStatus;
-import com.lms.customer.model.enums.KycType;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Document(collection = "kyc_documents")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class KycDocument {
 
     @Id
-    private String id;                // MongoDB document id
+    private String id;
 
-    private String customerId;        // From JWT / principal
-    private KycType type;             // AADHAAR, PAN, ADDRESS_PROOF
+    private String customerId;
 
-    private KycStatus status;         // PENDING | VERIFIED | REJECTED
+    private String documentType;   // 🔥 MUST be camelCase
 
-    private String documentNumber;    // Masked (e.g. XXXX1234)
+    private String documentNumber;
 
-    // Upload metadata
+    private KycStatus status;
+
+    private String remarks;
+
+    private String verifiedBy;
+
     private LocalDateTime uploadedAt;
 
-    // Admin audit fields
-    private String verifiedBy;
     private LocalDateTime verifiedAt;
-    private String remarks;
 }

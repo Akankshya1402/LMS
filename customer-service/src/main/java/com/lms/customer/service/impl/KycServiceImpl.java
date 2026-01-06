@@ -1,5 +1,7 @@
 package com.lms.customer.service.impl;
 
+import com.lms.customer.dto.KycDocumentResponse;
+import com.lms.customer.dto.KycUploadRequest;
 import com.lms.customer.model.KycDocument;
 import com.lms.customer.model.enums.KycStatus;
 import com.lms.customer.repository.KycDocumentRepository;
@@ -19,40 +21,43 @@ public class KycServiceImpl implements KycService {
     private final CustomerService customerService;
 
     // =========================
-    // CUSTOMER: UPLOAD DOCUMENT
+    // CUSTOMER → UPLOAD DOCUMENT
     // =========================
     @Override
-    public void uploadDocument(KycDocument document) {
+    public void uploadDocument(KycUploadRequest request, String customerId) {
 
+        KycDocument document = new KycDocument();
+        document.setCustomerId(customerId);
+        document.setDocumentType(request.getDocumentType());
+        document.setDocumentNumber(request.getDocumentNumber());
         document.setStatus(KycStatus.PENDING);
         document.setUploadedAt(LocalDateTime.now());
 
         repository.save(document);
 
-        // Ensure customer is at least PENDING
-        customerService.updateKycStatus(
-                document.getCustomerId(),
-                KycStatus.PENDING
-        );
+        customerService.updateKycStatus(customerId, KycStatus.PENDING);
     }
 
     // =========================
-    // CUSTOMER: VIEW DOCUMENTS
+    // CUSTOMER → VIEW DOCUMENTS
     // =========================
     @Override
-    public List<KycDocument> getMyDocuments(String customerId) {
-        return repository.findByCustomerId(customerId);
+    public List<KycDocumentResponse> getMyDocuments(String customerId) {
+
+        return repository.findByCustomerId(customerId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     // =========================
-    // ADMIN: APPROVE DOCUMENT
+    // ADMIN → APPROVE DOCUMENT
     // =========================
     @Override
     public void approveDocument(String documentId, String remarks) {
 
         KycDocument document = repository.findById(documentId)
-                .orElseThrow(() ->
-                        new RuntimeException("KYC document not found"));
+                .orElseThrow(() -> new RuntimeException("KYC document not found"));
 
         document.setStatus(KycStatus.VERIFIED);
         document.setRemarks(remarks);
@@ -65,14 +70,13 @@ public class KycServiceImpl implements KycService {
     }
 
     // =========================
-    // ADMIN: REJECT DOCUMENT
+    // ADMIN → REJECT DOCUMENT
     // =========================
     @Override
     public void rejectDocument(String documentId, String remarks) {
 
         KycDocument document = repository.findById(documentId)
-                .orElseThrow(() ->
-                        new RuntimeException("KYC document not found"));
+                .orElseThrow(() -> new RuntimeException("KYC document not found"));
 
         document.setStatus(KycStatus.REJECTED);
         document.setRemarks(remarks);
@@ -85,22 +89,18 @@ public class KycServiceImpl implements KycService {
     }
 
     // =========================
-    // INTERNAL: RECALCULATE KYC
+    // INTERNAL HELPERS
     // =========================
     private void recalculateOverallKyc(String customerId) {
 
-        List<KycDocument> documents =
-                repository.findByCustomerId(customerId);
+        List<KycDocument> documents = repository.findByCustomerId(customerId);
 
-        if (documents == null || documents.isEmpty()) {
+        if (documents.isEmpty()) {
             customerService.updateKycStatus(customerId, KycStatus.PENDING);
             return;
         }
 
-        boolean anyRejected = documents.stream()
-                .anyMatch(d -> d.getStatus() == KycStatus.REJECTED);
-
-        if (anyRejected) {
+        if (documents.stream().anyMatch(d -> d.getStatus() == KycStatus.REJECTED)) {
             customerService.updateKycStatus(customerId, KycStatus.REJECTED);
             return;
         }
@@ -108,11 +108,23 @@ public class KycServiceImpl implements KycService {
         boolean allVerified = documents.stream()
                 .allMatch(d -> d.getStatus() == KycStatus.VERIFIED);
 
-        if (allVerified) {
-            customerService.updateKycStatus(customerId, KycStatus.VERIFIED);
-        } else {
-            customerService.updateKycStatus(customerId, KycStatus.PENDING);
-        }
+        customerService.updateKycStatus(
+                customerId,
+                allVerified ? KycStatus.VERIFIED : KycStatus.PENDING
+        );
     }
 
+    private KycDocumentResponse toResponse(KycDocument document) {
+
+        KycDocumentResponse dto = new KycDocumentResponse();
+        dto.setId(document.getId());
+        dto.setDocumentType(document.getDocumentType());
+        dto.setStatus(document.getStatus());
+        dto.setRemarks(document.getRemarks());
+        dto.setUploadedAt(document.getUploadedAt());
+        dto.setVerifiedAt(document.getVerifiedAt());
+
+        return dto;
+    }
 }
+

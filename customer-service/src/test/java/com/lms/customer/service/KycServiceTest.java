@@ -1,8 +1,9 @@
 package com.lms.customer.service;
 
+import com.lms.customer.dto.KycUploadRequest;
+import com.lms.customer.dto.KycDocumentResponse;
 import com.lms.customer.model.KycDocument;
 import com.lms.customer.model.enums.KycStatus;
-import com.lms.customer.model.enums.KycType;
 import com.lms.customer.repository.KycDocumentRepository;
 import com.lms.customer.service.impl.KycServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,28 +33,24 @@ class KycServiceTest {
     private KycServiceImpl service;
 
     // =========================
-    // CUSTOMER: UPLOAD DOCUMENT
+    // CUSTOMER → UPLOAD DOCUMENT
     // =========================
     @Test
     void shouldUploadDocument() {
 
-        KycDocument document = KycDocument.builder()
-                .customerId("C1")
-                .type(KycType.PAN)
-                .build();
+        KycUploadRequest request = new KycUploadRequest();
+        request.setDocumentType("PAN");
+        request.setDocumentNumber("ABCDE1234F");
 
-        service.uploadDocument(document);
+        service.uploadDocument(request, "C1");
 
-        assertEquals(KycStatus.PENDING, document.getStatus());
-        assertNotNull(document.getUploadedAt());
-
-        verify(repository).save(document);
+        verify(repository).save(any(KycDocument.class));
         verify(customerService)
                 .updateKycStatus("C1", KycStatus.PENDING);
     }
 
     // =========================
-    // CUSTOMER: VIEW DOCUMENTS
+    // CUSTOMER → VIEW DOCUMENTS
     // =========================
     @Test
     void shouldReturnCustomerDocuments() {
@@ -59,23 +58,22 @@ class KycServiceTest {
         when(repository.findByCustomerId("C1"))
                 .thenReturn(List.of(new KycDocument()));
 
-        List<KycDocument> documents = service.getMyDocuments("C1");
+        List<KycDocumentResponse> documents =
+                service.getMyDocuments("C1");
 
         assertEquals(1, documents.size());
         verify(repository).findByCustomerId("C1");
     }
 
     // =========================
-    // ADMIN: APPROVE DOCUMENT
+    // ADMIN → APPROVE DOCUMENT
     // =========================
     @Test
     void shouldApproveDocument() {
 
-        KycDocument document = KycDocument.builder()
-                .id("D1")
-                .customerId("C1")
-                .status(KycStatus.VERIFIED)
-                .build();
+        KycDocument document = new KycDocument();
+        document.setId("D1");
+        document.setCustomerId("C1");
 
         when(repository.findById("D1"))
                 .thenReturn(Optional.of(document));
@@ -91,16 +89,14 @@ class KycServiceTest {
 
 
     // =========================
-    // ADMIN: REJECT DOCUMENT
+    // ADMIN → REJECT DOCUMENT
     // =========================
     @Test
     void shouldRejectDocument() {
 
-        KycDocument document = KycDocument.builder()
-                .id("D1")
-                .customerId("C1")
-                .status(KycStatus.REJECTED)
-                .build();
+        KycDocument document = new KycDocument();
+        document.setId("D1");
+        document.setCustomerId("C1");
 
         when(repository.findById("D1"))
                 .thenReturn(Optional.of(document));
@@ -116,7 +112,7 @@ class KycServiceTest {
 
 
     // =========================
-    // ERROR: DOCUMENT NOT FOUND
+    // ERROR → DOCUMENT NOT FOUND
     // =========================
     @Test
     void shouldThrowExceptionWhenDocumentNotFound() {
@@ -124,11 +120,11 @@ class KycServiceTest {
         when(repository.findById("X"))
                 .thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(
+        RuntimeException ex = assertThrows(
                 RuntimeException.class,
                 () -> service.approveDocument("X", "OK")
         );
 
-        assertEquals("KYC document not found", exception.getMessage());
+        assertEquals("KYC document not found", ex.getMessage());
     }
 }

@@ -1,7 +1,9 @@
 package com.lms.customer.controller;
 
-import com.lms.customer.model.KycDocument;
+import com.lms.customer.dto.KycDocumentResponse;
+import com.lms.customer.dto.KycUploadRequest;
 import com.lms.customer.service.KycService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,29 +20,19 @@ public class KycController {
 
     private final KycService kycService;
 
-    // =========================
-    // CUSTOMER → UPLOAD KYC DOCUMENT
-    // =========================
     @PostMapping("/customers/me/kyc")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<Void> uploadKyc(
-            @RequestBody KycDocument document,
+            @RequestBody @Valid KycUploadRequest request,
             Principal principal) {
 
-        // Server-controlled fields
-        document.setCustomerId(principal.getName());
-
-        kycService.uploadDocument(document);
-
+        kycService.uploadDocument(request, principal.getName());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // =========================
-    // CUSTOMER → VIEW OWN KYC DOCUMENTS
-    // =========================
     @GetMapping("/customers/me/kyc")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<List<KycDocument>> getMyKycDocuments(
+    public ResponseEntity<List<KycDocumentResponse>> getMyKycDocuments(
             Principal principal) {
 
         return ResponseEntity.ok(
@@ -48,9 +40,6 @@ public class KycController {
         );
     }
 
-    // =========================
-    // ADMIN → APPROVE KYC DOCUMENT
-    // =========================
     @PutMapping("/admin/kyc/{documentId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> approveKyc(
@@ -61,9 +50,6 @@ public class KycController {
         return ResponseEntity.ok().build();
     }
 
-    // =========================
-    // ADMIN → REJECT KYC DOCUMENT
-    // =========================
     @PutMapping("/admin/kyc/{documentId}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> rejectKyc(
